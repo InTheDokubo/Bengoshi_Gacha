@@ -15,7 +15,7 @@
             overscroll-behavior: none;
         }
         
-        /* === 既存アニメーション === */
+        /* === 汎用アニメーション === */
         .shake { animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both; }
         @keyframes shake {
             10%, 90% { transform: translate3d(-1px, 0, 0); }
@@ -36,34 +36,43 @@
         /* 共通: 画面叩きつけアニメーション */
         .text-slam {
             animation: text-slam 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+            will-change: transform, opacity; /* 描画最適化 */
         }
         @keyframes text-slam {
             0% { transform: scale(3) rotate(-15deg); opacity: 0; filter: blur(20px); }
             100% { transform: scale(1) rotate(0deg); opacity: 1; filter: blur(0); }
         }
 
-        /* SSR用: 虹色発光テキスト */
+        /* SSR用: 虹色発光テキスト (完全修正版) */
         .ssr-rainbow-text {
-            color: transparent;
-            background-image: linear-gradient(to bottom, #fff 20%, #ff00de 40%, #00ffff 60%, #fff 80%);
-            background-size: 200% auto;
-            background-clip: text;
-            -webkit-background-clip: text;
-            /* 激しい発光シャドウ */
+            color: #ffffff;
+            /* 影の範囲を少し広げて柔らかくし、線の発生を防ぐ */
             text-shadow: 
-                0 0 10px rgba(255,255,255,0.8),
-                0 0 20px rgba(255,0,255,0.5),
-                0 0 40px rgba(0,255,255,0.5);
-            animation: shine-text 0.5s linear infinite alternate;
+                0 0 15px rgba(255, 0, 0, 0.8),
+                0 0 30px rgba(255, 255, 0, 0.8),
+                0 0 50px rgba(0, 255, 255, 0.8);
+            animation: rainbow-cycle 2s linear infinite;
+            
+            /* レイアウト崩れ防止 */
+            width: fit-content;
+            line-height: 1.1; /* 少し余裕を持たせる */
+            margin: 0 auto;
+            
+            /* 背景描画の無効化（念の為） */
+            background: none !important;
+            -webkit-background-clip: border-box !important;
+            background-clip: border-box !important;
         }
-        @keyframes shine-text {
-            0% { background-position: 0% 50%; filter: brightness(100%); }
-            100% { background-position: 100% 50%; filter: brightness(150%); }
+        @keyframes rainbow-cycle {
+            0% { filter: hue-rotate(0deg) brightness(1.2); }
+            100% { filter: hue-rotate(360deg) brightness(1.2); }
         }
 
         /* LR用: 赤黒ネオン・超勝訴 */
         .lr-demon-text {
             color: #fff;
+            line-height: 1;
+            width: fit-content;
             text-shadow:
                 0 0 5px #fff,
                 0 0 10px #ff0000,
@@ -135,14 +144,25 @@
             0% { transform: translateX(-100%) rotate(30deg); }
             100% { transform: translateX(100%) rotate(30deg); }
         }
+
+        /* === 修正箇所: 紙吹雪（謎の点の正体）のスタイル定義を追加 === */
+        .confetti {
+            position: absolute;
+            top: -10vh; /* 画面外からスタート */
+            z-index: 40; /* テキスト(z-50)の後ろ、背景より前 */
+            pointer-events: none;
+            animation: confetti-fall linear forwards;
+        }
+        @keyframes confetti-fall {
+            0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+            100% { transform: translateY(110vh) rotate(720deg); opacity: 0; }
+        }
     </style>
 </head>
 <body class="flex flex-col h-screen items-center justify-center bg-stone-900">
 
-    <!-- 背景装飾 -->
     <div class="fixed inset-0 pointer-events-none opacity-10" style="background-image: url('data:image/svg+xml,%3Csvg width=\'60\' height=\'60\' viewBox=\'0 0 60 60\' xmlns=\'0 0 2000/svg\'%3E%3Cg fill=\'none\' fill-rule=\'evenodd\'%3E%3Cg fill=\'%239C92AC\' fill-opacity=\'0.4\'%3E%3Cpath d=\'M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z\'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E');"></div>
 
-    <!-- メイン画面 -->
     <div id="main-screen" class="z-10 text-center w-full max-w-md md:max-w-2xl px-4 flex flex-col justify-center h-full">
         <h1 class="text-4xl md:text-6xl font-black mb-4 text-yellow-500 tracking-tighter drop-shadow-lg">
             激闘！<br><span class="text-white text-3xl md:text-5xl">法廷弁護士ガチャ</span>
@@ -154,12 +174,12 @@
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 relative z-10">
                 <button onclick="pullGacha(1)" class="relative group overflow-hidden bg-stone-700 hover:bg-stone-600 border border-stone-500 text-white font-bold py-4 px-6 rounded transition-all transform hover:scale-105 active:scale-95">
                     <span class="relative z-10 text-xl">単発開廷</span>
-                    <span class="text-xs block text-stone-400">1回 1被告人</span>
+                    <span class="text-xs block text-stone-400">1回 300円(嘘)</span>
                     <div class="absolute inset-0 bg-white/5 opacity-0 group-hover:opacity-100 transition-opacity"></div>
                 </button>
                 <button onclick="pullGacha(10)" class="relative group overflow-hidden bg-gradient-to-br from-yellow-700 to-yellow-600 hover:from-yellow-600 hover:to-yellow-500 border border-yellow-400 text-white font-bold py-4 px-6 rounded transition-all transform hover:scale-105 active:scale-95 pulse-gold">
                     <span class="relative z-10 text-xl drop-shadow-md">10連開廷</span>
-                    <span class="text-xs block text-yellow-200">SR以上1枚確定</span>
+                    <span class="text-xs block text-yellow-200">SR以上1枚確定かも</span>
                     <div class="absolute inset-0 shine-effect opacity-0 group-hover:opacity-100"></div>
                 </button>
             </div>
@@ -171,34 +191,25 @@
         </div>
     </div>
 
-    <!-- 演出画面 -->
     <div id="animation-screen" class="hidden fixed inset-0 z-50 bg-black flex flex-col items-center justify-center pointer-events-none overflow-hidden touch-none">
         
-        <!-- 稲妻レイヤー (LR用) -->
-        <svg id="lightning-layer" class="absolute inset-0 w-full h-full z-10 pointer-events-none"></svg>
+        <svg id="lightning-layer" class="hidden absolute inset-0 w-full h-full z-10 pointer-events-none"></svg>
 
-        <!-- テキスト演出用コンテナ -->
         <div id="anim-text-container" class="absolute inset-0 flex items-center justify-center overflow-hidden z-20">
-            <!-- JSで動的に追加 -->
-        </div>
+            </div>
         
-        <!-- ガベル（木槌）アイコン -->
         <div id="gavel-icon" class="text-9xl text-stone-200 opacity-0 transform rotate-45 transition-all duration-300 z-10 relative">
             🔨
         </div>
         
-        <!-- 閃光 -->
         <div id="flash-overlay" class="absolute inset-0 bg-white opacity-0 pointer-events-none z-30"></div>
     </div>
 
-    <!-- 結果画面 -->
     <div id="result-screen" class="hidden fixed inset-0 z-40 bg-black/95 flex flex-col items-center justify-center overflow-y-auto py-10">
         <h2 id="result-title" class="text-3xl text-yellow-500 font-bold mb-6 mt-10 opacity-0 transition-opacity duration-1000">開廷結果</h2>
         
-        <!-- カード表示エリア -->
         <div id="cards-container" class="grid grid-cols-2 md:grid-cols-5 gap-4 px-4 w-full max-w-6xl mb-8">
-            <!-- カードがここに生成される -->
-        </div>
+            </div>
 
         <div class="flex gap-4 mt-4 mb-10 opacity-0 transition-opacity duration-1000 w-full justify-center px-4" id="result-buttons">
             <button onclick="closeResult()" class="flex-1 md:flex-none max-w-xs bg-white text-black font-bold py-3 px-8 rounded hover:bg-gray-200">閉廷</button>
@@ -206,7 +217,6 @@
         </div>
     </div>
 
-    <!-- 履歴モーダル -->
     <div id="history-modal" class="hidden fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4">
         <div class="bg-stone-800 w-full max-w-4xl max-h-[80vh] rounded-lg border border-stone-600 flex flex-col shadow-2xl">
             <div class="p-4 border-b border-stone-600 flex justify-between items-center">
@@ -214,8 +224,7 @@
                 <button onclick="toggleHistory()" class="text-stone-400 hover:text-white text-2xl p-2">&times;</button>
             </div>
             <div id="history-content" class="p-4 overflow-y-auto flex-1 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
-                <!-- 履歴リスト -->
-            </div>
+                </div>
         </div>
     </div>
 
@@ -367,12 +376,17 @@
             const textContainer = document.getElementById('anim-text-container');
             const lightningLayer = document.getElementById('lightning-layer');
             
+            // 初期化
             animScreen.classList.remove('hidden');
             textContainer.innerHTML = '';
-            lightningLayer.innerHTML = ''; // 稲妻クリア
+            lightningLayer.innerHTML = '';
+            lightningLayer.classList.add('hidden'); // 念の為隠す
+            
+            // ガベルリセット
+            gavel.style.display = 'block'; // 確実に表示
             gavel.style.opacity = '0';
             gavel.style.transform = 'rotate(45deg) scale(0.5)';
-            animScreen.style.backgroundColor = 'black'; // デフォルト黒
+            animScreen.style.backgroundColor = 'black';
 
             const isMobile = window.innerWidth < 768;
 
@@ -394,34 +408,37 @@
             // 4. レアリティ分岐
             if (maxRarity === 5) { // LR: 超勝訴 (神・赤黒ネオン)
                 // 暗転
-                gavel.style.opacity = '0';
+                gavel.style.display = 'none'; // ガベル完全消去
                 await wait(200);
+
+                // LRなので稲妻レイヤーを表示
+                lightningLayer.classList.remove('hidden');
 
                 // テキスト連打: 「超」「勝」「訴」
                 const chars = ['超', '勝', '訴'];
                 
                 for(let i=0; i<3; i++) {
-                    // 稲妻発生
                     spawnLightning();
-                    if(i === 2) spawnLightning(); // 最後の1文字で激しく
+                    if(i === 2) spawnLightning(); 
 
-                    // 画面揺れ
                     document.body.classList.remove('shake');
                     void document.body.offsetWidth;
                     document.body.classList.add('shake');
                     
-                    // 赤ネオン文字生成
                     createDemonText(chars[i], i, isMobile);
                     
                     await wait(i === 0 ? 300 : 400);
                 }
                 
-                // 余韻
                 spawnLightning();
                 await wait(2000);
+                
+                // 終了時隠蔽
+                lightningLayer.classList.add('hidden');
 
             } else if (maxRarity === 4) { // SSR: 勝訴 (虹色発光)
-                gavel.style.opacity = '0';
+                gavel.style.display = 'none'; // ガベル完全消去 (重要)
+                
                 flash.style.opacity = '1';
                 await wait(100);
                 flash.style.opacity = '0';
@@ -455,23 +472,20 @@
         function createDemonText(char, index, isMobile) {
             const el = document.createElement('div');
             el.innerText = char;
-            // 共通クラス+LR専用クラス
             el.className = 'absolute font-black text-slam z-50 lr-demon-text';
             
             if (isMobile) {
-                // スマホ: 縦配置
-                const yOffset = (index - 1) * 30; // %単位
-                el.style.fontSize = '35vw'; // 画面はみ出るレベル
+                const yOffset = (index - 1) * 32; 
+                el.style.fontSize = '35vw';
                 el.style.left = '50%';
                 el.style.top = `calc(50% + ${yOffset}%)`;
                 el.style.transform = 'translate(-50%, -50%)';
-                // 位置微調整（text-slamのアニメーション起点を考慮）
+                // マージンでの位置補正
                 el.style.marginLeft = '-17.5vw'; 
                 el.style.marginTop = '-17.5vw';
             } else {
-                // PC: 横配置
-                const xOffset = (index - 1) * 200; // px
-                el.style.fontSize = '18rem'; // 超巨大
+                const xOffset = (index - 1) * 200;
+                el.style.fontSize = '18rem';
                 el.style.left = `calc(50% + ${xOffset}px - 9rem)`;
                 el.style.top = '50%';
                 el.style.marginTop = '-9rem';
@@ -480,15 +494,16 @@
             document.getElementById('anim-text-container').appendChild(el);
         }
 
-        // --- SSR用: 虹色発光文字 ---
+        // --- SSR用: 虹色発光文字 (修正版) ---
         function createRainbowText(char, index, isMobile) {
             const el = document.createElement('div');
             el.innerText = char;
             el.className = 'absolute font-black text-slam z-50 ssr-rainbow-text';
             
             if (isMobile) {
-                const yOffset = (index === 0 ? -15 : 15);
-                el.style.fontSize = '40vw'; // 巨大
+                // 少し間隔を広げる
+                const yOffset = (index === 0 ? -16 : 16);
+                el.style.fontSize = '40vw';
                 el.style.left = '50%';
                 el.style.top = `calc(50% + ${yOffset}%)`;
                 el.style.marginLeft = '-20vw';
@@ -521,27 +536,10 @@
         // --- 稲妻生成ロジック ---
         function spawnLightning() {
             const svg = document.getElementById('lightning-layer');
+            if (svg.classList.contains('hidden')) return; // 安全策
+
             const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
             
-            // ランダムな稲妻パスを生成
-            // 画面上部から下部へ、ランダムに折れ曲がる
-            let x = Math.random() * 100; // start X (%)
-            let d = `M ${x} 0`;
-            let currentY = 0;
-            
-            while(currentY < 100) {
-                currentY += Math.random() * 20 + 5;
-                x += (Math.random() - 0.5) * 30; // 左右にブレる
-                d += ` L ${x} ${currentY}`;
-            }
-            
-            // SVG座標系への変換はCSSで%指定しているのでそのまま使えるが、
-            // pathデータ内では座標系が必要。
-            // 簡易的にviewBox="0 0 100 100"として扱うのが楽だが、
-            // アスペクト比の問題があるので、pathのd属性を構築する際に画面サイズを考慮する
-            
-            // 今回はシンプルに、SVG要素自体はwidth/height=100%なので、
-            // JavaScriptで実際のピクセル値を計算してパスを描く
             const w = window.innerWidth;
             const h = window.innerHeight;
             
@@ -560,7 +558,6 @@
             
             svg.appendChild(path);
             
-            // アニメーション終了後に削除
             setTimeout(() => {
                 path.remove();
             }, 500);
@@ -570,7 +567,7 @@
             const container = document.getElementById('animation-screen');
             for(let i=0; i<50; i++) {
                 const conf = document.createElement('div');
-                conf.className = 'confetti'; // 既存スタイル流用(白・金など)
+                conf.className = 'confetti'; 
                 conf.style.left = Math.random() * 100 + 'vw';
                 conf.style.backgroundColor = ['#ffd700', '#ffffff'][Math.floor(Math.random()*2)];
                 conf.style.width = (Math.random() * 10 + 5) + 'px';
@@ -607,7 +604,7 @@
                 else if(char.rarity === 'SR') icon = '🎖️';
                 else if(char.rarity === 'R') icon = '💼';
 
-                // LR装飾: 背景を赤黒系に
+                // LR装飾
                 const lrOverlay = isLR ? '<div class="absolute inset-0 bg-gradient-to-tr from-red-900/50 to-black animate-pulse z-0"></div>' : '';
                 const iconAnim = isLR ? 'animate-bounce drop-shadow-[0_0_15px_rgba(255,0,0,1)]' : 'filter drop-shadow-lg';
                 const textColor = isLR ? 'text-red-200' : 'text-white';
@@ -735,4 +732,3 @@
     </script>
 </body>
 </html>
-
