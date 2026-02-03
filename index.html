@@ -2,17 +2,35 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>激闘！法廷弁護士ガチャ</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@400;700;900&display=swap" rel="stylesheet">
     <style>
+        html, body {
+            height: 100%;
+            height: 100dvh; /* モバイルのアドレスバー対策 */
+            margin: 0;
+            padding: 0;
+            overflow: hidden; /* 全体のスクロールを禁止 */
+        }
+
         body {
             font-family: 'Noto Serif JP', serif;
             background-color: #0f0f0f;
             color: #e5e5e5;
-            overflow-x: hidden;
-            overscroll-behavior: none;
+            width: 100%;
+            position: relative;
+            touch-action: manipulation; /* ダブルタップズーム防止 */
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        /* 揺らすためのラッパー用スタイル */
+        #shake-container {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            z-index: 1;
         }
         
         /* === 汎用アニメーション === */
@@ -145,7 +163,7 @@
             100% { transform: translateX(100%) rotate(30deg); }
         }
 
-        /* === 修正箇所: 紙吹雪（謎の点の正体）のスタイル定義を追加 === */
+        /* 紙吹雪のスタイル */
         .confetti {
             position: absolute;
             top: -10vh; /* 画面外からスタート */
@@ -159,72 +177,92 @@
         }
     </style>
 </head>
-<body class="flex flex-col h-screen items-center justify-center bg-stone-900">
+<body class="bg-stone-900">
 
-    <div class="fixed inset-0 pointer-events-none opacity-10" style="background-image: url('data:image/svg+xml,%3Csvg width=\'60\' height=\'60\' viewBox=\'0 0 60 60\' xmlns=\'0 0 2000/svg\'%3E%3Cg fill=\'none\' fill-rule=\'evenodd\'%3E%3Cg fill=\'%239C92AC\' fill-opacity=\'0.4\'%3E%3Cpath d=\'M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z\'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E');"></div>
-
-    <div id="main-screen" class="z-10 text-center w-full max-w-md md:max-w-2xl px-4 flex flex-col justify-center h-full">
-        <h1 class="text-4xl md:text-6xl font-black mb-4 text-yellow-500 tracking-tighter drop-shadow-lg">
-            激闘！<br><span class="text-white text-3xl md:text-5xl">法廷弁護士ガチャ</span>
-        </h1>
-        <p class="text-stone-500 mb-8 font-bold tracking-widest text-xs md:text-sm">JUDGEMENT GACHA SYSTEM</p>
+    <!-- 揺れる対象のコンテナ (背景とメインコンテンツ) -->
+    <!-- iOSでのfixed要素ズレを防ぐため、bodyではなくこのdivを揺らす -->
+    <div id="shake-container">
         
-        <div class="bg-stone-800 p-6 rounded-lg border border-stone-600 shadow-2xl mb-8 relative overflow-hidden">
-            <div class="absolute inset-0 bg-gradient-to-b from-transparent to-black/30 pointer-events-none"></div>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 relative z-10">
-                <button onclick="pullGacha(1)" class="relative group overflow-hidden bg-stone-700 hover:bg-stone-600 border border-stone-500 text-white font-bold py-4 px-6 rounded transition-all transform hover:scale-105 active:scale-95">
-                    <span class="relative z-10 text-xl">単発開廷</span>
-                    <span class="text-xs block text-stone-400">1回 1被告人</span>
-                    <div class="absolute inset-0 bg-white/5 opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                </button>
-                <button onclick="pullGacha(10)" class="relative group overflow-hidden bg-gradient-to-br from-yellow-700 to-yellow-600 hover:from-yellow-600 hover:to-yellow-500 border border-yellow-400 text-white font-bold py-4 px-6 rounded transition-all transform hover:scale-105 active:scale-95 pulse-gold">
-                    <span class="relative z-10 text-xl drop-shadow-md">10連開廷</span>
-                    <span class="text-xs block text-yellow-200">SR以上1枚確定</span>
-                    <div class="absolute inset-0 shine-effect opacity-0 group-hover:opacity-100"></div>
-                </button>
-            </div>
-        </div>
+        <!-- 背景装飾 -->
+        <div class="fixed inset-0 pointer-events-none opacity-10" style="background-image: url('data:image/svg+xml,%3Csvg width=\'60\' height=\'60\' viewBox=\'0 0 60 60\' xmlns=\'0 0 2000/svg\'%3E%3Cg fill=\'none\' fill-rule=\'evenodd\'%3E%3Cg fill=\'%239C92AC\' fill-opacity=\'0.4\'%3E%3Cpath d=\'M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z\'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E');"></div>
 
-        <div class="flex justify-center gap-4">
-            <button onclick="toggleHistory()" class="text-stone-400 hover:text-white underline text-sm">獲得した弁護士一覧</button>
-            <button onclick="resetData()" class="text-red-900 hover:text-red-700 underline text-sm">データ初期化</button>
+        <!-- メイン画面 -->
+        <div id="main-screen" class="z-10 text-center w-full max-w-md md:max-w-2xl px-4 flex flex-col justify-center h-full mx-auto relative">
+            <h1 class="text-4xl md:text-6xl font-black mb-4 text-yellow-500 tracking-tighter drop-shadow-lg select-none">
+                激闘！<br><span class="text-white text-3xl md:text-5xl">法廷弁護士ガチャ</span>
+            </h1>
+            <p class="text-stone-500 mb-8 font-bold tracking-widest text-xs md:text-sm select-none">JUDGEMENT GACHA SYSTEM</p>
+            
+            <div class="bg-stone-800 p-6 rounded-lg border border-stone-600 shadow-2xl mb-8 relative overflow-hidden">
+                <div class="absolute inset-0 bg-gradient-to-b from-transparent to-black/30 pointer-events-none"></div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 relative z-10">
+                    <button onclick="pullGacha(1)" class="relative group overflow-hidden bg-stone-700 hover:bg-stone-600 border border-stone-500 text-white font-bold py-4 px-6 rounded transition-all transform hover:scale-105 active:scale-95 touch-manipulation">
+                        <span class="relative z-10 text-xl">単発開廷</span>
+                        <span class="text-xs block text-stone-400">1回 300円(嘘)</span>
+                        <div class="absolute inset-0 bg-white/5 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                    </button>
+                    <button onclick="pullGacha(10)" class="relative group overflow-hidden bg-gradient-to-br from-yellow-700 to-yellow-600 hover:from-yellow-600 hover:to-yellow-500 border border-yellow-400 text-white font-bold py-4 px-6 rounded transition-all transform hover:scale-105 active:scale-95 pulse-gold touch-manipulation">
+                        <span class="relative z-10 text-xl drop-shadow-md">10連開廷</span>
+                        <span class="text-xs block text-yellow-200">SR以上1枚確定かも</span>
+                        <div class="absolute inset-0 shine-effect opacity-0 group-hover:opacity-100"></div>
+                    </button>
+                </div>
+            </div>
+
+            <div class="flex justify-center gap-4">
+                <button onclick="toggleHistory()" class="text-stone-400 hover:text-white underline text-sm touch-manipulation">獲得した弁護士一覧</button>
+                <button onclick="resetData()" class="text-red-900 hover:text-red-700 underline text-sm touch-manipulation">データ初期化</button>
+            </div>
         </div>
     </div>
 
+    <!-- 以下は fixed なので shake-container の外に出す -->
+
+    <!-- 演出画面 -->
     <div id="animation-screen" class="hidden fixed inset-0 z-50 bg-black flex flex-col items-center justify-center pointer-events-none overflow-hidden touch-none">
         
+        <!-- 稲妻レイヤー (LR用) -->
         <svg id="lightning-layer" class="hidden absolute inset-0 w-full h-full z-10 pointer-events-none"></svg>
 
+        <!-- テキスト演出用コンテナ -->
         <div id="anim-text-container" class="absolute inset-0 flex items-center justify-center overflow-hidden z-20">
-            </div>
+            <!-- JSで動的に追加 -->
+        </div>
         
-        <div id="gavel-icon" class="text-9xl text-stone-200 opacity-0 transform rotate-45 transition-all duration-300 z-10 relative">
+        <!-- ガベル（木槌）アイコン -->
+        <div id="gavel-icon" class="text-9xl text-stone-200 opacity-0 transform rotate-45 transition-all duration-300 z-10 relative select-none">
             🔨
         </div>
         
+        <!-- 閃光 -->
         <div id="flash-overlay" class="absolute inset-0 bg-white opacity-0 pointer-events-none z-30"></div>
     </div>
 
-    <div id="result-screen" class="hidden fixed inset-0 z-40 bg-black/95 flex flex-col items-center justify-center overflow-y-auto py-10">
-        <h2 id="result-title" class="text-3xl text-yellow-500 font-bold mb-6 mt-10 opacity-0 transition-opacity duration-1000">開廷結果</h2>
+    <!-- 結果画面 -->
+    <div id="result-screen" class="hidden fixed inset-0 z-40 bg-black/95 flex flex-col items-center justify-center overflow-y-auto py-10 overscroll-none">
+        <h2 id="result-title" class="text-3xl text-yellow-500 font-bold mb-6 mt-10 opacity-0 transition-opacity duration-1000 shrink-0">開廷結果</h2>
         
-        <div id="cards-container" class="grid grid-cols-2 md:grid-cols-5 gap-4 px-4 w-full max-w-6xl mb-8">
-            </div>
+        <!-- カード表示エリア -->
+        <div id="cards-container" class="grid grid-cols-2 md:grid-cols-5 gap-4 px-4 w-full max-w-6xl mb-8 shrink-0">
+            <!-- カードがここに生成される -->
+        </div>
 
-        <div class="flex gap-4 mt-4 mb-10 opacity-0 transition-opacity duration-1000 w-full justify-center px-4" id="result-buttons">
-            <button onclick="closeResult()" class="flex-1 md:flex-none max-w-xs bg-white text-black font-bold py-3 px-8 rounded hover:bg-gray-200">閉廷</button>
-            <button onclick="retryGacha()" class="flex-1 md:flex-none max-w-xs bg-yellow-600 text-white font-bold py-3 px-8 rounded hover:bg-yellow-500">再審請求</button>
+        <div class="flex gap-4 mt-4 mb-10 opacity-0 transition-opacity duration-1000 w-full justify-center px-4 shrink-0" id="result-buttons">
+            <button onclick="closeResult()" class="flex-1 md:flex-none max-w-xs bg-white text-black font-bold py-3 px-8 rounded hover:bg-gray-200 touch-manipulation">閉廷</button>
+            <button onclick="retryGacha()" class="flex-1 md:flex-none max-w-xs bg-yellow-600 text-white font-bold py-3 px-8 rounded hover:bg-yellow-500 touch-manipulation">再審請求</button>
         </div>
     </div>
 
+    <!-- 履歴モーダル -->
     <div id="history-modal" class="hidden fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4">
         <div class="bg-stone-800 w-full max-w-4xl max-h-[80vh] rounded-lg border border-stone-600 flex flex-col shadow-2xl">
-            <div class="p-4 border-b border-stone-600 flex justify-between items-center">
+            <div class="p-4 border-b border-stone-600 flex justify-between items-center shrink-0">
                 <h2 class="text-xl text-yellow-500 font-bold">弁護士名鑑</h2>
-                <button onclick="toggleHistory()" class="text-stone-400 hover:text-white text-2xl p-2">&times;</button>
+                <button onclick="toggleHistory()" class="text-stone-400 hover:text-white text-2xl p-2 touch-manipulation">&times;</button>
             </div>
-            <div id="history-content" class="p-4 overflow-y-auto flex-1 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
-                </div>
+            <div id="history-content" class="p-4 overflow-y-auto flex-1 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 overscroll-contain">
+                <!-- 履歴リスト -->
+            </div>
         </div>
     </div>
 
@@ -375,6 +413,7 @@
             const flash = document.getElementById('flash-overlay');
             const textContainer = document.getElementById('anim-text-container');
             const lightningLayer = document.getElementById('lightning-layer');
+            const shakeContainer = document.getElementById('shake-container'); // ラッパー取得
             
             // 初期化
             animScreen.classList.remove('hidden');
@@ -402,8 +441,9 @@
             gavel.style.transition = 'transform 0.1s cubic-bezier(0.25, 1, 0.5, 1)';
             gavel.style.transform = 'rotate(-10deg) scale(0.9)'; 
             
-            document.body.classList.add('shake');
-            setTimeout(() => document.body.classList.remove('shake'), 500);
+            // 修正: bodyではなくラッパーを揺らす
+            shakeContainer.classList.add('shake');
+            setTimeout(() => shakeContainer.classList.remove('shake'), 500);
 
             // 4. レアリティ分岐
             if (maxRarity === 5) { // LR: 超勝訴 (神・赤黒ネオン)
@@ -421,9 +461,10 @@
                     spawnLightning();
                     if(i === 2) spawnLightning(); 
 
-                    document.body.classList.remove('shake');
-                    void document.body.offsetWidth;
-                    document.body.classList.add('shake');
+                    // 揺らす
+                    shakeContainer.classList.remove('shake');
+                    void shakeContainer.offsetWidth;
+                    shakeContainer.classList.add('shake');
                     
                     createDemonText(chars[i], i, isMobile);
                     
@@ -435,6 +476,8 @@
                 
                 // 終了時隠蔽
                 lightningLayer.classList.add('hidden');
+                // 揺れクラス削除 (念の為)
+                shakeContainer.classList.remove('shake');
 
             } else if (maxRarity === 4) { // SSR: 勝訴 (虹色発光)
                 gavel.style.display = 'none'; // ガベル完全消去 (重要)
@@ -643,6 +686,7 @@
                 card.style.opacity = '1';
                 card.style.transform = 'scale(1)';
                 if (results[i].rarity === 'LR' || results[i].rarity === 'SSR') {
+                    // ここもカード単体を揺らすのでOK
                     card.classList.add('shake');
                 }
             }
@@ -732,3 +776,4 @@
     </script>
 </body>
 </html>
+
