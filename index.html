@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>激闘！法廷弁護士ガチャ</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@400;700;900&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Noto Serif JP', serif;
+            background-color: #1a1a1a;
+            color: #e5e5e5;
+            overflow-x: hidden;
+        }
+        
+        /* 汎用アニメーション */
+        .shake { animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both; }
+        @keyframes shake {
+            10%, 90% { transform: translate3d(-1px, 0, 0); }
+            20%, 80% { transform: translate3d(2px, 0, 0); }
+            30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
+            40%, 60% { transform: translate3d(4px, 0, 0); }
+        }
+
+        .pulse-gold { animation: pulse-gold 2s infinite; }
+        @keyframes pulse-gold {
+            0% { box-shadow: 0 0 0 0 rgba(234, 179, 8, 0.4); }
+            70% { box-shadow: 0 0 0 15px rgba(234, 179, 8, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(234, 179, 8, 0); }
+        }
+
+        .rainbow-bg {
+            background: linear-gradient(124deg, #ff2400, #e81d1d, #e8b71d, #e3e81d, #1de840, #1ddde8, #2b1de8, #dd00f3, #dd00f3);
+            background-size: 1800% 1800%;
+            animation: rainbow 4s ease infinite;
+        }
+        @keyframes rainbow { 
+            0% { background-position: 0% 82% }
+            50% { background-position: 100% 19% }
+            100% { background-position: 0% 82% }
+        }
+
+        .shine-effect {
+            position: relative;
+            overflow: hidden;
+        }
+        .shine-effect::after {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(to bottom right, rgba(255,255,255,0) 0%, rgba(255,255,255,0.1) 40%, rgba(255,255,255,0.5) 50%, rgba(255,255,255,0.1) 60%, rgba(255,255,255,0) 100%);
+            transform: rotate(30deg);
+            animation: shine 3s infinite;
+        }
+        @keyframes shine {
+            0% { transform: translateX(-100%) rotate(30deg); }
+            100% { transform: translateX(100%) rotate(30deg); }
+        }
+
+        /* レアリティ別カードスタイル */
+        .card-C { border: 2px solid #a3a3a3; background: #262626; }
+        .card-R { border: 2px solid #60a5fa; background: #1e3a8a; box-shadow: 0 0 10px rgba(96, 165, 250, 0.3); }
+        .card-SR { border: 2px solid #fbbf24; background: #451a03; box-shadow: 0 0 15px rgba(251, 191, 36, 0.5); }
+        .card-SSR { 
+            border: 4px solid #fff; 
+            background: linear-gradient(135deg, #000 0%, #333 100%);
+            box-shadow: 0 0 20px rgba(255, 255, 255, 0.8), 0 0 40px rgba(234, 179, 8, 0.6);
+            animation: ssr-border 2s infinite alternate;
+        }
+        @keyframes ssr-border {
+            0% { border-color: #ffd700; }
+            100% { border-color: #fff; }
+        }
+
+        /* 登場時エフェクト */
+        .flash-bang {
+            animation: flash 0.2s ease-out;
+        }
+        @keyframes flash {
+            0% { background-color: white; opacity: 1; }
+            100% { background-color: transparent; opacity: 0; }
+        }
+
+        /* 紙吹雪 */
+        .confetti {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background-color: #ffd700;
+            animation: fall linear forwards;
+        }
+        @keyframes fall {
+            to { transform: translateY(100vh) rotate(720deg); }
+        }
+
+        /* UI制御 */
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body class="flex flex-col h-screen items-center justify-center bg-stone-900">
+
+    <!-- 背景装飾 -->
+    <div class="fixed inset-0 pointer-events-none opacity-10" style="background-image: url('data:image/svg+xml,%3Csvg width=\'60\' height=\'60\' viewBox=\'0 0 60 60\' xmlns=\'0 0 2000/svg\'%3E%3Cg fill=\'none\' fill-rule=\'evenodd\'%3E%3Cg fill=\'%239C92AC\' fill-opacity=\'0.4\'%3E%3Cpath d=\'M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z\'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E');"></div>
+
+    <!-- メイン画面 -->
+    <div id="main-screen" class="z-10 text-center w-full max-w-2xl px-4">
+        <h1 class="text-5xl md:text-6xl font-black mb-2 text-yellow-500 tracking-tighter drop-shadow-lg">
+            激闘！<br><span class="text-white text-4xl md:text-5xl">法廷弁護士ガチャ</span>
+        </h1>
+        <p class="text-stone-400 mb-8 font-bold tracking-widest">JUDGEMENT GACHA SYSTEM</p>
+
+        <div class="bg-stone-800 p-6 rounded-lg border border-stone-600 shadow-2xl mb-8">
+            <div class="grid grid-cols-2 gap-4">
+                <button onclick="pullGacha(1)" class="relative group overflow-hidden bg-stone-700 hover:bg-stone-600 border border-stone-500 text-white font-bold py-4 px-6 rounded transition-all transform hover:scale-105 active:scale-95">
+                    <span class="relative z-10 text-xl">単発開廷</span>
+                    <span class="text-xs block text-stone-400">1回 300円(嘘)</span>
+                    <div class="absolute inset-0 bg-white/5 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                </button>
+                <button onclick="pullGacha(10)" class="relative group overflow-hidden bg-gradient-to-br from-yellow-700 to-yellow-600 hover:from-yellow-600 hover:to-yellow-500 border border-yellow-400 text-white font-bold py-4 px-6 rounded transition-all transform hover:scale-105 active:scale-95 pulse-gold">
+                    <span class="relative z-10 text-xl drop-shadow-md">10連開廷</span>
+                    <span class="text-xs block text-yellow-200">SR以上1枚確定かも</span>
+                    <div class="absolute inset-0 shine-effect opacity-0 group-hover:opacity-100"></div>
+                </button>
+            </div>
+        </div>
+
+        <div class="flex justify-center gap-4">
+            <button onclick="toggleHistory()" class="text-stone-400 hover:text-white underline text-sm">獲得した弁護士一覧</button>
+            <button onclick="resetData()" class="text-red-900 hover:text-red-700 underline text-sm">データ初期化</button>
+        </div>
+    </div>
+
+    <!-- 演出画面 -->
+    <div id="animation-screen" class="hidden fixed inset-0 z-50 bg-black flex flex-col items-center justify-center pointer-events-none">
+        <!-- テキスト演出用コンテナ -->
+        <div id="anim-text-container" class="absolute inset-0 flex items-center justify-center overflow-hidden">
+            <!-- JSで動的に追加 -->
+        </div>
+        
+        <!-- ガベル（木槌）アイコン -->
+        <div id="gavel-icon" class="text-9xl text-stone-200 opacity-0 transform rotate-45 transition-all duration-300">
+            🔨
+        </div>
+        
+        <!-- 閃光 -->
+        <div id="flash-overlay" class="absolute inset-0 bg-white opacity-0 pointer-events-none"></div>
+    </div>
+
+    <!-- 結果画面 -->
+    <div id="result-screen" class="hidden fixed inset-0 z-40 bg-black/90 flex flex-col items-center justify-center overflow-y-auto py-10">
+        <h2 id="result-title" class="text-3xl text-yellow-500 font-bold mb-6 mt-10 opacity-0 transition-opacity duration-1000">開廷結果</h2>
+        
+        <!-- カード表示エリア -->
+        <div id="cards-container" class="grid grid-cols-2 md:grid-cols-5 gap-4 px-4 w-full max-w-6xl mb-8">
+            <!-- カードがここに生成される -->
+        </div>
+
+        <div class="flex gap-4 mt-4 mb-10 opacity-0 transition-opacity duration-1000" id="result-buttons">
+            <button onclick="closeResult()" class="bg-white text-black font-bold py-3 px-8 rounded hover:bg-gray-200">閉廷</button>
+            <button onclick="retryGacha()" class="bg-yellow-600 text-white font-bold py-3 px-8 rounded hover:bg-yellow-500">再審請求 (もう一度)</button>
+        </div>
+    </div>
+
+    <!-- 履歴モーダル -->
+    <div id="history-modal" class="hidden fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4">
+        <div class="bg-stone-800 w-full max-w-4xl max-h-[80vh] rounded-lg border border-stone-600 flex flex-col shadow-2xl">
+            <div class="p-4 border-b border-stone-600 flex justify-between items-center">
+                <h2 class="text-xl text-yellow-500 font-bold">弁護士名鑑</h2>
+                <button onclick="toggleHistory()" class="text-stone-400 hover:text-white text-2xl">&times;</button>
+            </div>
+            <div id="history-content" class="p-4 overflow-y-auto flex-1 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
+                <!-- 履歴リスト -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // === データ定義 (CSVから変換) ===
+        // レアリティ: SSR(3%), SR(12%), R(35%), C(50%)
+        const CHARACTERS = [
+            { rarity: 'SSR', name: '国選弁護人', line: '私に任せてください' },
+            { rarity: 'SR', name: 'ベテラン弁護士', line: '今度はどんな案件だ？' },
+            { rarity: 'SR', name: '歴戦の弁護士', line: '必ず勝ちましょう' },
+            { rarity: 'R', name: 'バーサーカー弁護士', line: '検察を倒せばいいんだろ' },
+            { rarity: 'R', name: 'ヤブ弁護士', line: '弁護士バッチ２個も持ってますよ' },
+            { rarity: 'R', name: 'フリー弁護士', line: '(ウォーターマークがついている)' },
+            { rarity: 'C', name: 'デコイ弁護士', line: '弁護士のふりをして相手をおびき寄せます' },
+            { rarity: 'C', name: '嘘弁護士', line: '実は、被告人こそが殺人の被害者なのです' },
+            { rarity: 'C', name: '逆弁護士', line: '被告人の刑をさらに重くすることを要求します' },
+            { rarity: 'C', name: '犯罪系弁護士', line: '最近私も法を犯したのでその気持ちがよくわかります' },
+            { rarity: 'C', name: '弁護マ士ン', line: '1999年製造 決闘罪にのみ対応' },
+            { rarity: 'C', name: '肉体派弁護士', line: '裁判長よりガタイがいい。法をつかさどるのはでかいやつだぜ' },
+            { rarity: 'C', name: '脱法弁護士', line: 'そんな法律、私には効かない' },
+            { rarity: 'C', name: '弁護士(自然生成)', line: '弁護士もオーガニックが一番です' },
+            { rarity: 'C', name: '小学生時代給食に出てきたオレンジを口にくわえてふざけていた人を集めてデスゲームを開催したい弁護士', line: '開催したい' },
+            { rarity: 'C', name: 'ネット民', line: '弁護はワイらに任せるやで' }
+        ];
+
+        const RATES = {
+            SSR: 0.03,
+            SR: 0.12,
+            R: 0.35,
+            C: 0.50
+        };
+
+        const RARITY_ORDER = { 'SSR': 4, 'SR': 3, 'R': 2, 'C': 1 };
+        const RARITY_COLORS = {
+            'SSR': 'text-yellow-400',
+            'SR': 'text-red-400',
+            'R': 'text-blue-300',
+            'C': 'text-gray-400'
+        };
+
+        let gachaHistory = JSON.parse(localStorage.getItem('lawyerGachaHistory')) || [];
+        let lastPullCount = 1;
+
+        // === ゲームロジック ===
+
+        function getRandomChar() {
+            const rand = Math.random();
+            let selectedRarity = 'C';
+            
+            if (rand < RATES.SSR) selectedRarity = 'SSR';
+            else if (rand < RATES.SSR + RATES.SR) selectedRarity = 'SR';
+            else if (rand < RATES.SSR + RATES.SR + RATES.R) selectedRarity = 'R';
+
+            const pool = CHARACTERS.filter(c => c.rarity === selectedRarity);
+            return pool[Math.floor(Math.random() * pool.length)];
+        }
+
+        async function pullGacha(count) {
+            lastPullCount = count;
+            const results = [];
+            let maxRarity = 0;
+
+            for (let i = 0; i < count; i++) {
+                const char = getRandomChar();
+                results.push(char);
+                if (RARITY_ORDER[char.rarity] > maxRarity) {
+                    maxRarity = RARITY_ORDER[char.rarity];
+                }
+            }
+
+            // 履歴保存
+            results.forEach(r => {
+                gachaHistory.push({ ...r, date: new Date().toISOString() });
+            });
+            localStorage.setItem('lawyerGachaHistory', JSON.stringify(gachaHistory));
+
+            // 演出開始
+            await playAnimation(maxRarity, results);
+        }
+
+        // === 演出ロジック ===
+
+        async function playAnimation(maxRarity, results) {
+            const animScreen = document.getElementById('animation-screen');
+            const gavel = document.getElementById('gavel-icon');
+            const flash = document.getElementById('flash-overlay');
+            const textContainer = document.getElementById('anim-text-container');
+            
+            animScreen.classList.remove('hidden');
+            textContainer.innerHTML = '';
+            gavel.style.opacity = '0';
+            gavel.style.transform = 'rotate(45deg) scale(0.5)';
+
+            // 1. 静寂 (少し待つ)
+            await wait(300);
+
+            // 2. ガベル出現 & 振りかぶり
+            gavel.style.opacity = '1';
+            gavel.style.transform = 'rotate(45deg) scale(1)';
+            await wait(600);
+
+            // 3. 叩く！ (アニメーション)
+            gavel.style.transition = 'transform 0.1s cubic-bezier(0.25, 1, 0.5, 1)';
+            gavel.style.transform = 'rotate(-10deg) scale(0.9)'; // 叩いた位置
+            
+            // ドン！という音の視覚化（画面シェイク）
+            document.body.classList.add('shake');
+            setTimeout(() => document.body.classList.remove('shake'), 500);
+
+            // 4. レアリティに応じた演出
+            if (maxRarity === 4) { // SSR
+                // 画面暗転 -> スポットライト -> 勝訴
+                gavel.style.opacity = '0';
+                flash.style.opacity = '1'; // 一瞬真っ白
+                await wait(100);
+                flash.style.opacity = '0';
+                animScreen.style.backgroundColor = '#000'; // 真っ暗
+
+                // "勝訴" テキストが飛んでくる
+                createFlyingText('勝', -100);
+                await wait(200);
+                createFlyingText('訴', 100);
+                await wait(800);
+                
+                // 虹色背景フェードイン
+                animScreen.classList.add('rainbow-bg');
+                createExplosion();
+                await wait(1500);
+                animScreen.classList.remove('rainbow-bg');
+            } else if (maxRarity === 3) { // SR
+                // "異議あり！"
+                flash.style.opacity = '0.5';
+                await wait(100);
+                flash.style.opacity = '0';
+                createAlertText('異議あり！', 'text-red-500');
+                await wait(1200);
+            } else {
+                // 通常演出 "静粛に"
+                createAlertText('静粛に', 'text-stone-400');
+                await wait(800);
+            }
+
+            // 終了処理
+            animScreen.classList.add('hidden');
+            animScreen.style.backgroundColor = 'black';
+            showResults(results);
+        }
+
+        function createFlyingText(char, xOffset) {
+            const el = document.createElement('div');
+            el.innerText = char;
+            el.className = 'text-9xl font-black text-white absolute transition-all duration-500 transform scale-0 drop-shadow-[0_0_10px_rgba(255,215,0,0.8)]';
+            el.style.left = `calc(50% + ${xOffset}px - 50px)`; // 中央からのオフセット
+            document.getElementById('anim-text-container').appendChild(el);
+            
+            requestAnimationFrame(() => {
+                el.style.transform = 'scale(1.5)';
+            });
+        }
+
+        function createAlertText(text, colorClass) {
+            const el = document.createElement('div');
+            el.innerText = text;
+            el.className = `text-6xl md:text-8xl font-black ${colorClass} absolute transform scale-150 opacity-0 transition-all duration-300 border-4 border-current px-8 py-2 rotate-[-5deg]`;
+            document.getElementById('anim-text-container').appendChild(el);
+            
+            requestAnimationFrame(() => {
+                el.style.opacity = '1';
+                el.style.transform = 'scale(1) rotate(-5deg)';
+            });
+        }
+
+        function createExplosion() {
+            const container = document.getElementById('animation-screen');
+            for(let i=0; i<50; i++) {
+                const conf = document.createElement('div');
+                conf.className = 'confetti';
+                conf.style.left = Math.random() * 100 + 'vw';
+                conf.style.backgroundColor = ['#ffd700', '#ff0000', '#ffffff'][Math.floor(Math.random()*3)];
+                conf.style.animationDuration = (Math.random() * 1 + 0.5) + 's';
+                container.appendChild(conf);
+                setTimeout(() => conf.remove(), 2000);
+            }
+        }
+
+        // === 結果表示ロジック ===
+
+        async function showResults(results) {
+            const screen = document.getElementById('result-screen');
+            const container = document.getElementById('cards-container');
+            const title = document.getElementById('result-title');
+            const buttons = document.getElementById('result-buttons');
+            
+            screen.classList.remove('hidden');
+            container.innerHTML = '';
+            title.style.opacity = '0';
+            buttons.style.opacity = '0';
+
+            // カード生成 (裏面状態で)
+            results.forEach((char, index) => {
+                const card = document.createElement('div');
+                // 初期状態は透明・縮小
+                card.className = `relative opacity-0 transform scale-50 transition-all duration-500 group cursor-pointer`;
+                card.style.perspective = '1000px';
+
+                const cardInner = `
+                    <div class="w-full aspect-[2/3] relative rounded-lg overflow-hidden card-${char.rarity} p-2 flex flex-col justify-between hover:scale-105 transition-transform duration-300">
+                        <!-- レアリティ表示 -->
+                        <div class="absolute top-2 left-2 z-10 font-black text-xl italic drop-shadow-md ${RARITY_COLORS[char.rarity]} bg-black/50 px-2 rounded">
+                            ${char.rarity}
+                        </div>
+                        
+                        <!-- キャラ画像（プレースホルダー） -->
+                        <div class="flex-1 flex items-center justify-center bg-black/20 rounded mt-8 mb-2 mx-1 relative overflow-hidden">
+                             ${char.rarity === 'SSR' ? '<div class="absolute inset-0 bg-gradient-to-t from-yellow-500/20 to-transparent animate-pulse"></div>' : ''}
+                             <span class="text-4xl filter drop-shadow-lg">
+                                ${getIconForChar(char.rarity)}
+                             </span>
+                        </div>
+
+                        <!-- 名前とセリフ -->
+                        <div class="text-center relative z-10">
+                            <div class="font-bold text-sm md:text-base leading-tight mb-1 text-white border-b border-white/20 pb-1">
+                                ${char.name}
+                            </div>
+                            <div class="text-[10px] md:text-xs text-gray-300 italic min-h-[2.5em] flex items-center justify-center">
+                                "${char.line}"
+                            </div>
+                        </div>
+                    </div>
+                `;
+                card.innerHTML = cardInner;
+                container.appendChild(card);
+            });
+
+            // 順番に表示 (Reveal)
+            title.style.opacity = '1';
+            
+            for (let i = 0; i < results.length; i++) {
+                const card = container.children[i];
+                // 少し遅延させて表示
+                await wait(100);
+                card.style.opacity = '1';
+                card.style.transform = 'scale(1)';
+                
+                // SSRなら特別演出
+                if (results[i].rarity === 'SSR') {
+                    card.classList.add('shake');
+                    // キラキラ追加
+                }
+            }
+
+            await wait(500);
+            buttons.style.opacity = '1';
+        }
+
+        function getIconForChar(rarity) {
+            if (rarity === 'SSR') return '⚖️';
+            if (rarity === 'SR') return '🎖️';
+            if (rarity === 'R') return '💼';
+            return '📄';
+        }
+
+        // === ユーティリティ ===
+
+        function closeResult() {
+            const screen = document.getElementById('result-screen');
+            screen.classList.add('hidden');
+            document.getElementById('cards-container').innerHTML = '';
+        }
+
+        function retryGacha() {
+            closeResult();
+            pullGacha(lastPullCount);
+        }
+
+        function toggleHistory() {
+            const modal = document.getElementById('history-modal');
+            const content = document.getElementById('history-content');
+            
+            if (modal.classList.contains('hidden')) {
+                // 表示処理
+                modal.classList.remove('hidden');
+                
+                // 集計
+                const counts = {};
+                gachaHistory.forEach(item => {
+                    counts[item.name] = (counts[item.name] || 0) + 1;
+                });
+
+                content.innerHTML = '';
+                if (gachaHistory.length === 0) {
+                    content.innerHTML = '<div class="text-gray-500 p-4 col-span-full text-center">まだ誰も雇用していません</div>';
+                    return;
+                }
+
+                // 履歴表示（獲得数の多い順、レア度順）
+                // ユニークなキャラリストを作成
+                const uniqueChars = Array.from(new Set(gachaHistory.map(h => h.name)))
+                    .map(name => {
+                        return gachaHistory.find(h => h.name === name);
+                    })
+                    .sort((a, b) => RARITY_ORDER[b.rarity] - RARITY_ORDER[a.rarity]);
+
+                uniqueChars.forEach(char => {
+                    const div = document.createElement('div');
+                    div.className = `p-3 rounded border flex justify-between items-center ${char.rarity === 'SSR' ? 'bg-yellow-900/30 border-yellow-600' : 'bg-stone-700 border-stone-600'}`;
+                    div.innerHTML = `
+                        <div class="flex items-center gap-2">
+                            <span class="font-bold w-8 ${RARITY_COLORS[char.rarity]}">${char.rarity}</span>
+                            <span class="text-sm font-serif">${char.name}</span>
+                        </div>
+                        <span class="text-stone-400 text-xs">×${counts[char.name]}</span>
+                    `;
+                    content.appendChild(div);
+                });
+
+            } else {
+                modal.classList.add('hidden');
+            }
+        }
+
+        function resetData() {
+            if(confirm('獲得した弁護士データを全て破棄しますか？\n(この操作は取り消せません)')) {
+                localStorage.removeItem('lawyerGachaHistory');
+                gachaHistory = [];
+                alert('データを初期化しました。');
+            }
+        }
+
+        function wait(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+
+    </script>
+</body>
+</html>
