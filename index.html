@@ -182,8 +182,11 @@
         // === データ定義 (CSVから変換) ===
         // レアリティ: SSR(3%), SR(12%), R(35%), C(50%)
         const CHARACTERS = [
+            { rarity: 'SSR', name: '石油王弁護士', line: 'オイルマネーで裁判官に便宜を図るぜ' },
             { rarity: 'SSR', name: '国選弁護人', line: '私に任せてください' },
             { rarity: 'SR', name: 'ベテラン弁護士', line: '今度はどんな案件だ？' },
+            { rarity: 'SR', name: '警察', line: '弁護士抽選罪で逮捕します' },
+            { rarity: 'SR', name: '成歩堂龍二', line: 'ここにはたくさんの異議があります' },
             { rarity: 'SR', name: '歴戦の弁護士', line: '必ず勝ちましょう' },
             { rarity: 'R', name: 'バーサーカー弁護士', line: '検察を倒せばいいんだろ' },
             { rarity: 'R', name: 'ヤブ弁護士', line: '弁護士バッチ２個も持ってますよ' },
@@ -192,12 +195,37 @@
             { rarity: 'C', name: '嘘弁護士', line: '実は、被告人こそが殺人の被害者なのです' },
             { rarity: 'C', name: '逆弁護士', line: '被告人の刑をさらに重くすることを要求します' },
             { rarity: 'C', name: '犯罪系弁護士', line: '最近私も法を犯したのでその気持ちがよくわかります' },
-            { rarity: 'C', name: '弁護マ士ン', line: '1999年製造 決闘罪にのみ対応' },
+            { rarity: 'C', name: '弁護マ士ン', line: '1999年製造　決闘罪にのみ対応' },
             { rarity: 'C', name: '肉体派弁護士', line: '裁判長よりガタイがいい。法をつかさどるのはでかいやつだぜ' },
             { rarity: 'C', name: '脱法弁護士', line: 'そんな法律、私には効かない' },
             { rarity: 'C', name: '弁護士(自然生成)', line: '弁護士もオーガニックが一番です' },
             { rarity: 'C', name: '小学生時代給食に出てきたオレンジを口にくわえてふざけていた人を集めてデスゲームを開催したい弁護士', line: '開催したい' },
-            { rarity: 'C', name: 'ネット民', line: '弁護はワイらに任せるやで' }
+            { rarity: 'C', name: 'ネット民', line: '弁護はワイらに任せるやで' },
+            { rarity: 'C', name: 'エッチな弁護士４選', line: 'エッチ弁護士は、エッチ！' },
+            { rarity: 'C', name: '非正規雇用弁護士', line: '(指示待ちをしている)' },
+            { rarity: 'C', name: '裏弁護士', line: '見たことねぇ弁護見せてやるよ' },
+            { rarity: 'C', name: '試行回数弁護士', line: '100回弁護すれば、いつかは勝訴できるってわけです' },
+            { rarity: 'C', name: 'Temu弁護士', line: '12円(送料込み)' },
+            { rarity: 'C', name: '優しい弁護士', line: 'まずはありがとう(敗訴)' },
+            { rarity: 'C', name: '弁護士', line: '弁護するぜ' },
+            { rarity: 'C', name: 'デーモンコア弁護士', line: 'ｶﾁﾝ' },
+            { rarity: 'C', name: 'chatBGS', line: 'それ、完全に勝訴 !!' },
+            { rarity: 'C', name: '24時間弁護士', line: '不眠不休でやっております' },
+            { rarity: 'C', name: '静脈弁護士', line: '逆ですよ' },
+            { rarity: 'C', name: '人狼弁護士', line: 'ちょっと検察吊り盤面だね' },
+            { rarity: 'C', name: 'fps弁護士', line: '今被告激ロー激ロー' },
+            { rarity: 'C', name: '一日弁護士', line: 'これを機にロースクールに通います' },
+            { rarity: 'C', name: '元弁護士', line: '高校の時弁護してたんすよね' },
+            { rarity: 'C', name: '弁護士OB', line: '俺の頃こんなのなかってんで？' },
+            { rarity: 'C', name: 'アマ弁護士', line: '県大会２位' },
+            { rarity: 'C', name: '弁護士アイドル', line: 'みんなで一緒に上告しよう！' },
+            { rarity: 'C', name: '国選弁護火星人', line: '(異星人言語の音)' },
+            { rarity: 'C', name: 'イキリ弁護士', line: '法廷で横揺れかまそうや' },
+            { rarity: 'C', name: '光の弁護士', line: '闇の弁護士に強いぞ' },
+            { rarity: 'C', name: '闇の弁護士', line: '光の弁護士に強いぞ' },
+            { rarity: 'C', name: '天才弁護士犬', line: 'ワン！ワンワン！' },
+            { rarity: 'C', name: 'クローン弁護士', line: '俺はクローンじゃない' },
+            { rarity: 'C', name: '感覚派弁護士', line: '俺の勘が敗訴って言ってんだわ' }
         ];
 
         const RATES = {
@@ -331,7 +359,10 @@
             document.getElementById('anim-text-container').appendChild(el);
             
             requestAnimationFrame(() => {
-                el.style.transform = 'scale(1.5)';
+                // ダブルリクエストで描画を確実に
+                requestAnimationFrame(() => {
+                    el.style.transform = 'scale(1.5)';
+                });
             });
         }
 
@@ -342,8 +373,10 @@
             document.getElementById('anim-text-container').appendChild(el);
             
             requestAnimationFrame(() => {
-                el.style.opacity = '1';
-                el.style.transform = 'scale(1) rotate(-5deg)';
+                requestAnimationFrame(() => {
+                    el.style.opacity = '1';
+                    el.style.transform = 'scale(1) rotate(-5deg)';
+                });
             });
         }
 
@@ -502,13 +535,14 @@
                 localStorage.removeItem('lawyerGachaHistory');
                 gachaHistory = [];
                 alert('データを初期化しました。');
+                // 履歴モーダルが開いていたら閉じる
+                document.getElementById('history-modal').classList.add('hidden');
             }
         }
 
         function wait(ms) {
             return new Promise(resolve => setTimeout(resolve, ms));
         }
-
     </script>
 </body>
 </html>
