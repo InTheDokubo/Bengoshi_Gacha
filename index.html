@@ -2,19 +2,20 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>激闘！法廷弁護士ガチャ</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@400;700;900&display=swap" rel="stylesheet">
     <style>
         body {
             font-family: 'Noto Serif JP', serif;
-            background-color: #1a1a1a;
+            background-color: #0f0f0f;
             color: #e5e5e5;
             overflow-x: hidden;
+            overscroll-behavior: none;
         }
         
-        /* 汎用アニメーション */
+        /* === 既存アニメーション === */
         .shake { animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both; }
         @keyframes shake {
             10%, 90% { transform: translate3d(-1px, 0, 0); }
@@ -30,38 +31,70 @@
             100% { box-shadow: 0 0 0 0 rgba(234, 179, 8, 0); }
         }
 
-        .rainbow-bg {
-            background: linear-gradient(124deg, #ff2400, #e81d1d, #e8b71d, #e3e81d, #1de840, #1ddde8, #2b1de8, #dd00f3, #dd00f3);
-            background-size: 1800% 1800%;
-            animation: rainbow 4s ease infinite;
+        /* === 演出テキスト用スタイル === */
+        
+        /* 共通: 画面叩きつけアニメーション */
+        .text-slam {
+            animation: text-slam 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
         }
-        @keyframes rainbow { 
-            0% { background-position: 0% 82% }
-            50% { background-position: 100% 19% }
-            100% { background-position: 0% 82% }
-        }
-
-        .shine-effect {
-            position: relative;
-            overflow: hidden;
-        }
-        .shine-effect::after {
-            content: '';
-            position: absolute;
-            top: -50%;
-            left: -50%;
-            width: 200%;
-            height: 200%;
-            background: linear-gradient(to bottom right, rgba(255,255,255,0) 0%, rgba(255,255,255,0.1) 40%, rgba(255,255,255,0.5) 50%, rgba(255,255,255,0.1) 60%, rgba(255,255,255,0) 100%);
-            transform: rotate(30deg);
-            animation: shine 3s infinite;
-        }
-        @keyframes shine {
-            0% { transform: translateX(-100%) rotate(30deg); }
-            100% { transform: translateX(100%) rotate(30deg); }
+        @keyframes text-slam {
+            0% { transform: scale(3) rotate(-15deg); opacity: 0; filter: blur(20px); }
+            100% { transform: scale(1) rotate(0deg); opacity: 1; filter: blur(0); }
         }
 
-        /* レアリティ別カードスタイル */
+        /* SSR用: 虹色発光テキスト */
+        .ssr-rainbow-text {
+            color: transparent;
+            background-image: linear-gradient(to bottom, #fff 20%, #ff00de 40%, #00ffff 60%, #fff 80%);
+            background-size: 200% auto;
+            background-clip: text;
+            -webkit-background-clip: text;
+            /* 激しい発光シャドウ */
+            text-shadow: 
+                0 0 10px rgba(255,255,255,0.8),
+                0 0 20px rgba(255,0,255,0.5),
+                0 0 40px rgba(0,255,255,0.5);
+            animation: shine-text 0.5s linear infinite alternate;
+        }
+        @keyframes shine-text {
+            0% { background-position: 0% 50%; filter: brightness(100%); }
+            100% { background-position: 100% 50%; filter: brightness(150%); }
+        }
+
+        /* LR用: 赤黒ネオン・超勝訴 */
+        .lr-demon-text {
+            color: #fff;
+            text-shadow:
+                0 0 5px #fff,
+                0 0 10px #ff0000,
+                0 0 20px #ff0000,
+                0 0 40px #800000,
+                0 0 80px #400000,
+                0 0 100px #000;
+            animation: demon-pulse 0.1s infinite alternate;
+        }
+        @keyframes demon-pulse {
+            0% { text-shadow: 0 0 5px #fff, 0 0 20px #f00, 0 0 40px #800; transform: scale(1); }
+            100% { text-shadow: 0 0 10px #fff, 0 0 30px #f00, 0 0 60px #f00; transform: scale(1.02); }
+        }
+
+        /* 稲妻SVG用 */
+        .lightning-path {
+            stroke: #ff3333;
+            stroke-width: 3;
+            fill: none;
+            filter: drop-shadow(0 0 5px #ff0000) drop-shadow(0 0 10px #fff);
+            stroke-dasharray: 1000;
+            stroke-dashoffset: 1000;
+            animation: lightning-strike 0.3s linear forwards;
+        }
+        @keyframes lightning-strike {
+            0% { stroke-dashoffset: 1000; opacity: 1; }
+            50% { opacity: 1; }
+            100% { stroke-dashoffset: 0; opacity: 0; }
+        }
+
+        /* カードスタイル */
         .card-C { border: 2px solid #a3a3a3; background: #262626; }
         .card-R { border: 2px solid #60a5fa; background: #1e3a8a; box-shadow: 0 0 10px rgba(96, 165, 250, 0.3); }
         .card-SR { border: 2px solid #fbbf24; background: #451a03; box-shadow: 0 0 15px rgba(251, 191, 36, 0.5); }
@@ -71,34 +104,37 @@
             box-shadow: 0 0 20px rgba(255, 255, 255, 0.8), 0 0 40px rgba(234, 179, 8, 0.6);
             animation: ssr-border 2s infinite alternate;
         }
+        .card-LR {
+            border: 4px solid transparent;
+            background-image: linear-gradient(#000, #000), linear-gradient(to right, #ff0000 0%, #330000 50%, #ff0000 100%);
+            background-origin: border-box;
+            background-clip: content-box, border-box;
+            box-shadow: 0 0 30px rgba(255, 0, 0, 0.8), inset 0 0 20px rgba(255,0,0,0.5);
+            animation: lr-pulse 1.5s infinite;
+        }
+        @keyframes lr-pulse {
+            0% { transform: scale(1); box-shadow: 0 0 30px rgba(255, 0, 0, 0.8); }
+            50% { transform: scale(1.02); box-shadow: 0 0 50px rgba(255, 0, 0, 1); }
+            100% { transform: scale(1); box-shadow: 0 0 30px rgba(255, 0, 0, 0.8); }
+        }
+
         @keyframes ssr-border {
             0% { border-color: #ffd700; }
             100% { border-color: #fff; }
         }
 
-        /* 登場時エフェクト */
-        .flash-bang {
-            animation: flash 0.2s ease-out;
-        }
-        @keyframes flash {
-            0% { background-color: white; opacity: 1; }
-            100% { background-color: transparent; opacity: 0; }
-        }
-
-        /* 紙吹雪 */
-        .confetti {
-            position: absolute;
-            width: 10px;
-            height: 10px;
-            background-color: #ffd700;
-            animation: fall linear forwards;
-        }
-        @keyframes fall {
-            to { transform: translateY(100vh) rotate(720deg); }
-        }
-
-        /* UI制御 */
+        /* 共通UI */
         .hidden { display: none !important; }
+        .shine-effect { position: relative; overflow: hidden; }
+        .shine-effect::after {
+            content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%;
+            background: linear-gradient(to bottom right, rgba(255,255,255,0) 0%, rgba(255,255,255,0.1) 40%, rgba(255,255,255,0.5) 50%, rgba(255,255,255,0.1) 60%, rgba(255,255,255,0) 100%);
+            transform: rotate(30deg); animation: shine 3s infinite;
+        }
+        @keyframes shine {
+            0% { transform: translateX(-100%) rotate(30deg); }
+            100% { transform: translateX(100%) rotate(30deg); }
+        }
     </style>
 </head>
 <body class="flex flex-col h-screen items-center justify-center bg-stone-900">
@@ -107,14 +143,15 @@
     <div class="fixed inset-0 pointer-events-none opacity-10" style="background-image: url('data:image/svg+xml,%3Csvg width=\'60\' height=\'60\' viewBox=\'0 0 60 60\' xmlns=\'0 0 2000/svg\'%3E%3Cg fill=\'none\' fill-rule=\'evenodd\'%3E%3Cg fill=\'%239C92AC\' fill-opacity=\'0.4\'%3E%3Cpath d=\'M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z\'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E');"></div>
 
     <!-- メイン画面 -->
-    <div id="main-screen" class="z-10 text-center w-full max-w-2xl px-4">
-        <h1 class="text-5xl md:text-6xl font-black mb-2 text-yellow-500 tracking-tighter drop-shadow-lg">
-            激闘！<br><span class="text-white text-4xl md:text-5xl">法廷弁護士ガチャ</span>
+    <div id="main-screen" class="z-10 text-center w-full max-w-md md:max-w-2xl px-4 flex flex-col justify-center h-full">
+        <h1 class="text-4xl md:text-6xl font-black mb-4 text-yellow-500 tracking-tighter drop-shadow-lg">
+            激闘！<br><span class="text-white text-3xl md:text-5xl">法廷弁護士ガチャ</span>
         </h1>
-        <p class="text-stone-400 mb-8 font-bold tracking-widest">JUDGEMENT GACHA SYSTEM</p>
-
-        <div class="bg-stone-800 p-6 rounded-lg border border-stone-600 shadow-2xl mb-8">
-            <div class="grid grid-cols-2 gap-4">
+        <p class="text-stone-500 mb-8 font-bold tracking-widest text-xs md:text-sm">JUDGEMENT GACHA SYSTEM</p>
+        
+        <div class="bg-stone-800 p-6 rounded-lg border border-stone-600 shadow-2xl mb-8 relative overflow-hidden">
+            <div class="absolute inset-0 bg-gradient-to-b from-transparent to-black/30 pointer-events-none"></div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 relative z-10">
                 <button onclick="pullGacha(1)" class="relative group overflow-hidden bg-stone-700 hover:bg-stone-600 border border-stone-500 text-white font-bold py-4 px-6 rounded transition-all transform hover:scale-105 active:scale-95">
                     <span class="relative z-10 text-xl">単発開廷</span>
                     <span class="text-xs block text-stone-400">1回 300円(嘘)</span>
@@ -135,23 +172,27 @@
     </div>
 
     <!-- 演出画面 -->
-    <div id="animation-screen" class="hidden fixed inset-0 z-50 bg-black flex flex-col items-center justify-center pointer-events-none">
+    <div id="animation-screen" class="hidden fixed inset-0 z-50 bg-black flex flex-col items-center justify-center pointer-events-none overflow-hidden touch-none">
+        
+        <!-- 稲妻レイヤー (LR用) -->
+        <svg id="lightning-layer" class="absolute inset-0 w-full h-full z-10 pointer-events-none"></svg>
+
         <!-- テキスト演出用コンテナ -->
-        <div id="anim-text-container" class="absolute inset-0 flex items-center justify-center overflow-hidden">
+        <div id="anim-text-container" class="absolute inset-0 flex items-center justify-center overflow-hidden z-20">
             <!-- JSで動的に追加 -->
         </div>
         
         <!-- ガベル（木槌）アイコン -->
-        <div id="gavel-icon" class="text-9xl text-stone-200 opacity-0 transform rotate-45 transition-all duration-300">
+        <div id="gavel-icon" class="text-9xl text-stone-200 opacity-0 transform rotate-45 transition-all duration-300 z-10 relative">
             🔨
         </div>
         
         <!-- 閃光 -->
-        <div id="flash-overlay" class="absolute inset-0 bg-white opacity-0 pointer-events-none"></div>
+        <div id="flash-overlay" class="absolute inset-0 bg-white opacity-0 pointer-events-none z-30"></div>
     </div>
 
     <!-- 結果画面 -->
-    <div id="result-screen" class="hidden fixed inset-0 z-40 bg-black/90 flex flex-col items-center justify-center overflow-y-auto py-10">
+    <div id="result-screen" class="hidden fixed inset-0 z-40 bg-black/95 flex flex-col items-center justify-center overflow-y-auto py-10">
         <h2 id="result-title" class="text-3xl text-yellow-500 font-bold mb-6 mt-10 opacity-0 transition-opacity duration-1000">開廷結果</h2>
         
         <!-- カード表示エリア -->
@@ -159,9 +200,9 @@
             <!-- カードがここに生成される -->
         </div>
 
-        <div class="flex gap-4 mt-4 mb-10 opacity-0 transition-opacity duration-1000" id="result-buttons">
-            <button onclick="closeResult()" class="bg-white text-black font-bold py-3 px-8 rounded hover:bg-gray-200">閉廷</button>
-            <button onclick="retryGacha()" class="bg-yellow-600 text-white font-bold py-3 px-8 rounded hover:bg-yellow-500">再審請求 (もう一度)</button>
+        <div class="flex gap-4 mt-4 mb-10 opacity-0 transition-opacity duration-1000 w-full justify-center px-4" id="result-buttons">
+            <button onclick="closeResult()" class="flex-1 md:flex-none max-w-xs bg-white text-black font-bold py-3 px-8 rounded hover:bg-gray-200">閉廷</button>
+            <button onclick="retryGacha()" class="flex-1 md:flex-none max-w-xs bg-yellow-600 text-white font-bold py-3 px-8 rounded hover:bg-yellow-500">再審請求</button>
         </div>
     </div>
 
@@ -170,7 +211,7 @@
         <div class="bg-stone-800 w-full max-w-4xl max-h-[80vh] rounded-lg border border-stone-600 flex flex-col shadow-2xl">
             <div class="p-4 border-b border-stone-600 flex justify-between items-center">
                 <h2 class="text-xl text-yellow-500 font-bold">弁護士名鑑</h2>
-                <button onclick="toggleHistory()" class="text-stone-400 hover:text-white text-2xl">&times;</button>
+                <button onclick="toggleHistory()" class="text-stone-400 hover:text-white text-2xl p-2">&times;</button>
             </div>
             <div id="history-content" class="p-4 overflow-y-auto flex-1 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
                 <!-- 履歴リスト -->
@@ -179,14 +220,19 @@
     </div>
 
     <script>
-        // === データ定義 (CSVから変換) ===
-        // レアリティ: SSR(3%), SR(12%), R(35%), C(50%)
+        // === データ定義 ===
         const CHARACTERS = [
+            // --- LR ---
+            { rarity: 'LR', name: '裁判長', line: 'この世界を支配するのは誰か！刑法をもって教えてやろう！' },
+            
+            // --- SSR ---
             { rarity: 'SSR', name: '石油王弁護士', line: 'オイルマネーで裁判官に便宜を図るぜ' },
             { rarity: 'SSR', name: '国選弁護人', line: '私に任せてください' },
             { rarity: 'SSR', name: '検察官', line: '図りますよ。司法をね' },
             { rarity: 'SSR', name: '裁判員', line: '窃盗はいけないので死刑でいいと思った' },
             { rarity: 'SSR', name: '人語禁止弁護人', line: '𦅙彐繧ﾖ' },
+            
+            // --- SR ---
             { rarity: 'SR', name: '黒閃弁護人', line: 'ーー裁判の核心をつかむ' },
             { rarity: 'SR', name: 'ベテラン弁護士', line: '今度はどんな案件だ？' },
             { rarity: 'SR', name: '警察', line: '弁護士抽選罪で逮捕します' },
@@ -194,6 +240,8 @@
             { rarity: 'SR', name: '歴戦の弁護士', line: '必ず勝ちましょう' },
             { rarity: 'SR', name: '弁護士アンリミテッド', line: '１か月間最高の弁護を体験' },
             { rarity: 'SR', name: '弁弁護護士士', line: '二倍弁護できるぞ' },
+            
+            // --- R ---
             { rarity: 'R', name: 'バーサーカー弁護士', line: '検察を倒せばいいんだろ' },
             { rarity: 'R', name: 'ヤブ弁護士', line: '弁護士バッチ２個も持ってますよ' },
             { rarity: 'R', name: 'フリー弁護士', line: '(ウォーターマークがついている)' },
@@ -207,6 +255,8 @@
             { rarity: 'R', name: 'スタンダードプラン弁護士', line: '途中で広告が挟まる' },
             { rarity: 'R', name: '槍弁護士', line: '中距離で強い' },
             { rarity: 'R', name: '指示厨弁護士', line: 'え！そこ黙秘だって' },
+            
+            // --- C ---
             { rarity: 'C', name: 'デコイ弁護士', line: '弁護士のふりをして相手をおびき寄せます' },
             { rarity: 'C', name: '嘘弁護士', line: '実は、被告人こそが殺人の被害者なのです' },
             { rarity: 'C', name: '逆弁護士', line: '被告人の刑をさらに重くすることを要求します' },
@@ -245,14 +295,16 @@
         ];
 
         const RATES = {
+            LR: 0.0005, // 0.05%
             SSR: 0.03,
             SR: 0.12,
             R: 0.35,
-            C: 0.50
+            C: 0.4995
         };
 
-        const RARITY_ORDER = { 'SSR': 4, 'SR': 3, 'R': 2, 'C': 1 };
+        const RARITY_ORDER = { 'LR': 5, 'SSR': 4, 'SR': 3, 'R': 2, 'C': 1 };
         const RARITY_COLORS = {
+            'LR': 'text-red-500 font-black animate-pulse',
             'SSR': 'text-yellow-400',
             'SR': 'text-red-400',
             'R': 'text-blue-300',
@@ -261,16 +313,24 @@
 
         let gachaHistory = JSON.parse(localStorage.getItem('lawyerGachaHistory')) || [];
         let lastPullCount = 1;
+        let debugClickCount = 0;
+        let forceLrNext = false;
 
         // === ゲームロジック ===
 
         function getRandomChar() {
+            if (forceLrNext) {
+                forceLrNext = false;
+                debugClickCount = 0;
+                return CHARACTERS.find(c => c.rarity === 'LR');
+            }
+
             const rand = Math.random();
             let selectedRarity = 'C';
-            
-            if (rand < RATES.SSR) selectedRarity = 'SSR';
-            else if (rand < RATES.SSR + RATES.SR) selectedRarity = 'SR';
-            else if (rand < RATES.SSR + RATES.SR + RATES.R) selectedRarity = 'R';
+            if (rand < RATES.LR) selectedRarity = 'LR';
+            else if (rand < RATES.LR + RATES.SSR) selectedRarity = 'SSR';
+            else if (rand < RATES.LR + RATES.SSR + RATES.SR) selectedRarity = 'SR';
+            else if (rand < RATES.LR + RATES.SSR + RATES.SR + RATES.R) selectedRarity = 'R';
 
             const pool = CHARACTERS.filter(c => c.rarity === selectedRarity);
             return pool[Math.floor(Math.random() * pool.length)];
@@ -295,7 +355,6 @@
             });
             localStorage.setItem('lawyerGachaHistory', JSON.stringify(gachaHistory));
 
-            // 演出開始
             await playAnimation(maxRarity, results);
         }
 
@@ -306,86 +365,149 @@
             const gavel = document.getElementById('gavel-icon');
             const flash = document.getElementById('flash-overlay');
             const textContainer = document.getElementById('anim-text-container');
+            const lightningLayer = document.getElementById('lightning-layer');
             
             animScreen.classList.remove('hidden');
             textContainer.innerHTML = '';
+            lightningLayer.innerHTML = ''; // 稲妻クリア
             gavel.style.opacity = '0';
             gavel.style.transform = 'rotate(45deg) scale(0.5)';
+            animScreen.style.backgroundColor = 'black'; // デフォルト黒
 
-            // 1. 静寂 (少し待つ)
+            const isMobile = window.innerWidth < 768;
+
+            // 1. 静寂
             await wait(300);
 
-            // 2. ガベル出現 & 振りかぶり
+            // 2. ガベル出現
             gavel.style.opacity = '1';
             gavel.style.transform = 'rotate(45deg) scale(1)';
             await wait(600);
 
-            // 3. 叩く！ (アニメーション)
+            // 3. 叩く！
             gavel.style.transition = 'transform 0.1s cubic-bezier(0.25, 1, 0.5, 1)';
-            gavel.style.transform = 'rotate(-10deg) scale(0.9)'; // 叩いた位置
+            gavel.style.transform = 'rotate(-10deg) scale(0.9)'; 
             
-            // ドン！という音の視覚化（画面シェイク）
             document.body.classList.add('shake');
             setTimeout(() => document.body.classList.remove('shake'), 500);
 
-            // 4. レアリティに応じた演出
-            if (maxRarity === 4) { // SSR
-                // 画面暗転 -> スポットライト -> 勝訴
+            // 4. レアリティ分岐
+            if (maxRarity === 5) { // LR: 超勝訴 (神・赤黒ネオン)
+                // 暗転
                 gavel.style.opacity = '0';
-                flash.style.opacity = '1'; // 一瞬真っ白
+                await wait(200);
+
+                // テキスト連打: 「超」「勝」「訴」
+                const chars = ['超', '勝', '訴'];
+                
+                for(let i=0; i<3; i++) {
+                    // 稲妻発生
+                    spawnLightning();
+                    if(i === 2) spawnLightning(); // 最後の1文字で激しく
+
+                    // 画面揺れ
+                    document.body.classList.remove('shake');
+                    void document.body.offsetWidth;
+                    document.body.classList.add('shake');
+                    
+                    // 赤ネオン文字生成
+                    createDemonText(chars[i], i, isMobile);
+                    
+                    await wait(i === 0 ? 300 : 400);
+                }
+                
+                // 余韻
+                spawnLightning();
+                await wait(2000);
+
+            } else if (maxRarity === 4) { // SSR: 勝訴 (虹色発光)
+                gavel.style.opacity = '0';
+                flash.style.opacity = '1';
                 await wait(100);
                 flash.style.opacity = '0';
-                animScreen.style.backgroundColor = '#000'; // 真っ暗
-
-                // "勝訴" テキストが飛んでくる
-                createFlyingText('勝', -100);
+                
+                createRainbowText('勝', 0, isMobile);
                 await wait(200);
-                createFlyingText('訴', 100);
+                createRainbowText('訴', 1, isMobile);
                 await wait(800);
                 
-                // 虹色背景フェードイン
-                animScreen.classList.add('rainbow-bg');
                 createExplosion();
                 await wait(1500);
-                animScreen.classList.remove('rainbow-bg');
-            } else if (maxRarity === 3) { // SR
-                // "異議あり！"
+
+            } else if (maxRarity === 3) { // SR: 異議あり
                 flash.style.opacity = '0.5';
                 await wait(100);
                 flash.style.opacity = '0';
                 createAlertText('異議あり！', 'text-red-500');
                 await wait(1200);
-            } else {
-                // 通常演出 "静粛に"
+
+            } else { // R以下: 静粛に
                 createAlertText('静粛に', 'text-stone-400');
                 await wait(800);
             }
 
             // 終了処理
             animScreen.classList.add('hidden');
-            animScreen.style.backgroundColor = 'black';
             showResults(results);
         }
 
-        function createFlyingText(char, xOffset) {
+        // --- LR用: 赤黒ネオン文字 ---
+        function createDemonText(char, index, isMobile) {
             const el = document.createElement('div');
             el.innerText = char;
-            el.className = 'text-9xl font-black text-white absolute transition-all duration-500 transform scale-0 drop-shadow-[0_0_10px_rgba(255,215,0,0.8)]';
-            el.style.left = `calc(50% + ${xOffset}px - 50px)`; // 中央からのオフセット
-            document.getElementById('anim-text-container').appendChild(el);
+            // 共通クラス+LR専用クラス
+            el.className = 'absolute font-black text-slam z-50 lr-demon-text';
             
-            requestAnimationFrame(() => {
-                // ダブルリクエストで描画を確実に
-                requestAnimationFrame(() => {
-                    el.style.transform = 'scale(1.5)';
-                });
-            });
+            if (isMobile) {
+                // スマホ: 縦配置
+                const yOffset = (index - 1) * 30; // %単位
+                el.style.fontSize = '35vw'; // 画面はみ出るレベル
+                el.style.left = '50%';
+                el.style.top = `calc(50% + ${yOffset}%)`;
+                el.style.transform = 'translate(-50%, -50%)';
+                // 位置微調整（text-slamのアニメーション起点を考慮）
+                el.style.marginLeft = '-17.5vw'; 
+                el.style.marginTop = '-17.5vw';
+            } else {
+                // PC: 横配置
+                const xOffset = (index - 1) * 200; // px
+                el.style.fontSize = '18rem'; // 超巨大
+                el.style.left = `calc(50% + ${xOffset}px - 9rem)`;
+                el.style.top = '50%';
+                el.style.marginTop = '-9rem';
+            }
+            
+            document.getElementById('anim-text-container').appendChild(el);
+        }
+
+        // --- SSR用: 虹色発光文字 ---
+        function createRainbowText(char, index, isMobile) {
+            const el = document.createElement('div');
+            el.innerText = char;
+            el.className = 'absolute font-black text-slam z-50 ssr-rainbow-text';
+            
+            if (isMobile) {
+                const yOffset = (index === 0 ? -15 : 15);
+                el.style.fontSize = '40vw'; // 巨大
+                el.style.left = '50%';
+                el.style.top = `calc(50% + ${yOffset}%)`;
+                el.style.marginLeft = '-20vw';
+                el.style.marginTop = '-20vw';
+            } else {
+                const xOffset = (index === 0 ? -120 : 120);
+                el.style.fontSize = '16rem';
+                el.style.left = `calc(50% + ${xOffset}px - 8rem)`;
+                el.style.top = '50%';
+                el.style.marginTop = '-8rem';
+            }
+
+            document.getElementById('anim-text-container').appendChild(el);
         }
 
         function createAlertText(text, colorClass) {
             const el = document.createElement('div');
             el.innerText = text;
-            el.className = `text-6xl md:text-8xl font-black ${colorClass} absolute transform scale-150 opacity-0 transition-all duration-300 border-4 border-current px-8 py-2 rotate-[-5deg]`;
+            el.className = `text-[12vw] md:text-8xl font-black ${colorClass} absolute transform scale-150 opacity-0 transition-all duration-300 border-4 border-current px-8 py-2 rotate-[-5deg] whitespace-nowrap`;
             document.getElementById('anim-text-container').appendChild(el);
             
             requestAnimationFrame(() => {
@@ -396,13 +518,63 @@
             });
         }
 
+        // --- 稲妻生成ロジック ---
+        function spawnLightning() {
+            const svg = document.getElementById('lightning-layer');
+            const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+            
+            // ランダムな稲妻パスを生成
+            // 画面上部から下部へ、ランダムに折れ曲がる
+            let x = Math.random() * 100; // start X (%)
+            let d = `M ${x} 0`;
+            let currentY = 0;
+            
+            while(currentY < 100) {
+                currentY += Math.random() * 20 + 5;
+                x += (Math.random() - 0.5) * 30; // 左右にブレる
+                d += ` L ${x} ${currentY}`;
+            }
+            
+            // SVG座標系への変換はCSSで%指定しているのでそのまま使えるが、
+            // pathデータ内では座標系が必要。
+            // 簡易的にviewBox="0 0 100 100"として扱うのが楽だが、
+            // アスペクト比の問題があるので、pathのd属性を構築する際に画面サイズを考慮する
+            
+            // 今回はシンプルに、SVG要素自体はwidth/height=100%なので、
+            // JavaScriptで実際のピクセル値を計算してパスを描く
+            const w = window.innerWidth;
+            const h = window.innerHeight;
+            
+            let px = Math.random() * w;
+            let py = 0;
+            let pathStr = `M ${px} ${py}`;
+            
+            while(py < h) {
+                py += Math.random() * (h/5) + 20;
+                px += (Math.random() - 0.5) * (w/2);
+                pathStr += ` L ${px} ${py}`;
+            }
+
+            path.setAttribute("d", pathStr);
+            path.setAttribute("class", "lightning-path");
+            
+            svg.appendChild(path);
+            
+            // アニメーション終了後に削除
+            setTimeout(() => {
+                path.remove();
+            }, 500);
+        }
+
         function createExplosion() {
             const container = document.getElementById('animation-screen');
             for(let i=0; i<50; i++) {
                 const conf = document.createElement('div');
-                conf.className = 'confetti';
+                conf.className = 'confetti'; // 既存スタイル流用(白・金など)
                 conf.style.left = Math.random() * 100 + 'vw';
-                conf.style.backgroundColor = ['#ffd700', '#ff0000', '#ffffff'][Math.floor(Math.random()*3)];
+                conf.style.backgroundColor = ['#ffd700', '#ffffff'][Math.floor(Math.random()*2)];
+                conf.style.width = (Math.random() * 10 + 5) + 'px';
+                conf.style.height = conf.style.width;
                 conf.style.animationDuration = (Math.random() * 1 + 0.5) + 's';
                 container.appendChild(conf);
                 setTimeout(() => conf.remove(), 2000);
@@ -410,7 +582,6 @@
         }
 
         // === 結果表示ロジック ===
-
         async function showResults(results) {
             const screen = document.getElementById('result-screen');
             const container = document.getElementById('cards-container');
@@ -422,31 +593,39 @@
             title.style.opacity = '0';
             buttons.style.opacity = '0';
 
-            // カード生成 (裏面状態で)
             results.forEach((char, index) => {
                 const card = document.createElement('div');
-                // 初期状態は透明・縮小
                 card.className = `relative opacity-0 transform scale-50 transition-all duration-500 group cursor-pointer`;
                 card.style.perspective = '1000px';
 
+                const isLR = char.rarity === 'LR';
+                const cardBgClass = `card-${char.rarity}`;
+                
+                let icon = '📄';
+                if(char.rarity === 'LR') icon = '👑';
+                else if(char.rarity === 'SSR') icon = '⚖️';
+                else if(char.rarity === 'SR') icon = '🎖️';
+                else if(char.rarity === 'R') icon = '💼';
+
+                // LR装飾: 背景を赤黒系に
+                const lrOverlay = isLR ? '<div class="absolute inset-0 bg-gradient-to-tr from-red-900/50 to-black animate-pulse z-0"></div>' : '';
+                const iconAnim = isLR ? 'animate-bounce drop-shadow-[0_0_15px_rgba(255,0,0,1)]' : 'filter drop-shadow-lg';
+                const textColor = isLR ? 'text-red-200' : 'text-white';
+
                 const cardInner = `
-                    <div class="w-full aspect-[2/3] relative rounded-lg overflow-hidden card-${char.rarity} p-2 flex flex-col justify-between hover:scale-105 transition-transform duration-300">
-                        <!-- レアリティ表示 -->
-                        <div class="absolute top-2 left-2 z-10 font-black text-xl italic drop-shadow-md ${RARITY_COLORS[char.rarity]} bg-black/50 px-2 rounded">
+                    <div class="w-full aspect-[2/3] relative rounded-lg overflow-hidden ${cardBgClass} p-2 flex flex-col justify-between hover:scale-105 transition-transform duration-300">
+                        ${lrOverlay}
+                        <div class="absolute top-2 left-2 z-10 font-black text-xl italic drop-shadow-md ${RARITY_COLORS[char.rarity]} bg-black/60 px-2 rounded border border-white/10">
                             ${char.rarity}
                         </div>
-                        
-                        <!-- キャラ画像（プレースホルダー） -->
-                        <div class="flex-1 flex items-center justify-center bg-black/20 rounded mt-8 mb-2 mx-1 relative overflow-hidden">
+                        <div class="flex-1 flex items-center justify-center bg-black/20 rounded mt-8 mb-2 mx-1 relative overflow-hidden z-10">
                              ${char.rarity === 'SSR' ? '<div class="absolute inset-0 bg-gradient-to-t from-yellow-500/20 to-transparent animate-pulse"></div>' : ''}
-                             <span class="text-4xl filter drop-shadow-lg">
-                                ${getIconForChar(char.rarity)}
+                             <span class="text-4xl ${iconAnim}">
+                                ${icon}
                              </span>
                         </div>
-
-                        <!-- 名前とセリフ -->
                         <div class="text-center relative z-10">
-                            <div class="font-bold text-sm md:text-base leading-tight mb-1 text-white border-b border-white/20 pb-1">
+                            <div class="font-bold text-sm md:text-base leading-tight mb-1 ${textColor} border-b border-white/20 pb-1">
                                 ${char.name}
                             </div>
                             <div class="text-[10px] md:text-xs text-gray-300 italic min-h-[2.5em] flex items-center justify-center">
@@ -459,20 +638,15 @@
                 container.appendChild(card);
             });
 
-            // 順番に表示 (Reveal)
             title.style.opacity = '1';
             
             for (let i = 0; i < results.length; i++) {
                 const card = container.children[i];
-                // 少し遅延させて表示
                 await wait(100);
                 card.style.opacity = '1';
                 card.style.transform = 'scale(1)';
-                
-                // SSRなら特別演出
-                if (results[i].rarity === 'SSR') {
+                if (results[i].rarity === 'LR' || results[i].rarity === 'SSR') {
                     card.classList.add('shake');
-                    // キラキラ追加
                 }
             }
 
@@ -480,15 +654,7 @@
             buttons.style.opacity = '1';
         }
 
-        function getIconForChar(rarity) {
-            if (rarity === 'SSR') return '⚖️';
-            if (rarity === 'SR') return '🎖️';
-            if (rarity === 'R') return '💼';
-            return '📄';
-        }
-
         // === ユーティリティ ===
-
         function closeResult() {
             const screen = document.getElementById('result-screen');
             screen.classList.add('hidden');
@@ -505,23 +671,16 @@
             const content = document.getElementById('history-content');
             
             if (modal.classList.contains('hidden')) {
-                // 表示処理
                 modal.classList.remove('hidden');
-                
-                // 集計
                 const counts = {};
                 gachaHistory.forEach(item => {
                     counts[item.name] = (counts[item.name] || 0) + 1;
                 });
-
                 content.innerHTML = '';
                 if (gachaHistory.length === 0) {
                     content.innerHTML = '<div class="text-gray-500 p-4 col-span-full text-center">まだ誰も雇用していません</div>';
                     return;
                 }
-
-                // 履歴表示（獲得数の多い順、レア度順）
-                // ユニークなキャラリストを作成
                 const uniqueChars = Array.from(new Set(gachaHistory.map(h => h.name)))
                     .map(name => {
                         return gachaHistory.find(h => h.name === name);
@@ -530,29 +689,43 @@
 
                 uniqueChars.forEach(char => {
                     const div = document.createElement('div');
-                    div.className = `p-3 rounded border flex justify-between items-center ${char.rarity === 'SSR' ? 'bg-yellow-900/30 border-yellow-600' : 'bg-stone-700 border-stone-600'}`;
+                    const isLR = char.rarity === 'LR';
+                    const baseClass = isLR 
+                        ? 'bg-gradient-to-r from-red-900/50 to-black border-red-500' 
+                        : char.rarity === 'SSR' 
+                            ? 'bg-yellow-900/30 border-yellow-600' 
+                            : 'bg-stone-700 border-stone-600';
+                            
+                    div.className = `p-3 rounded border flex justify-between items-center ${baseClass}`;
+                    
                     div.innerHTML = `
                         <div class="flex items-center gap-2">
                             <span class="font-bold w-8 ${RARITY_COLORS[char.rarity]}">${char.rarity}</span>
-                            <span class="text-sm font-serif">${char.name}</span>
+                            <span class="text-sm font-serif ${isLR ? 'text-red-300' : ''}">${char.name}</span>
                         </div>
                         <span class="text-stone-400 text-xs">×${counts[char.name]}</span>
                     `;
                     content.appendChild(div);
                 });
-
             } else {
                 modal.classList.add('hidden');
             }
         }
 
         function resetData() {
+            debugClickCount++;
+            if (debugClickCount >= 10) {
+                forceLrNext = true;
+                alert('???「司法の闇が...開かれる...」\n(次回LR確定モードON)');
+                debugClickCount = 0;
+                return;
+            }
             if(confirm('獲得した弁護士データを全て破棄しますか？\n(この操作は取り消せません)')) {
                 localStorage.removeItem('lawyerGachaHistory');
                 gachaHistory = [];
                 alert('データを初期化しました。');
-                // 履歴モーダルが開いていたら閉じる
                 document.getElementById('history-modal').classList.add('hidden');
+                debugClickCount = 0;
             }
         }
 
@@ -562,5 +735,4 @@
     </script>
 </body>
 </html>
-
 
